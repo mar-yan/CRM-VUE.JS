@@ -70,7 +70,6 @@
                         typeText: record.type === 'income' ? `${localizeFilter('Income')}` : `${localizeFilter('Expenses')}`,
 
                     }
-                    console.log(categoryName)
                 }))
 
                 this.renderChart({
