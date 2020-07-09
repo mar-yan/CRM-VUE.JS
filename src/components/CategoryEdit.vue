@@ -2,20 +2,20 @@
     <div class="col s12 m6">
         <div>
             <div class="page-subtitle">
-                <h4>Редактировать</h4>
+                <h4>{{"Edit" | localize}}</h4>
             </div>
 
             <form @submit.prevent="submitHandler">
                 <div class="input-field">
                     <select ref="select" v-model="current">
                         <option
-                        v-for="c of categories"
-                        :key="c.id"
-                        :value="c.id"
+                                v-for="c of categories"
+                                :key="c.id"
+                                :value="c.id"
                         >{{c.title}}
                         </option>
                     </select>
-                    <label>Выберите категорию</label>
+                    <label>{{"Selected_category"|localize}}</label>
                 </div>
 
                 <div class="input-field">
@@ -26,12 +26,12 @@
                             :class="{invalid: $v.title.$dirty && !$v.title.required}"
 
                     >
-                    <label for="name">Название</label>
+                    <label for="name">{{"Title"|localize}}</label>
                     <span
                             v-if="$v.title.$dirty && !$v.title.required"
                             class="helper-text invalid"
                     >
-                        Введите название категории
+                        {{"Enter_name"|localize}}
                     </span>
                 </div>
 
@@ -42,18 +42,18 @@
                             v-model.number="limit"
                             :class="{invalid: $v.limit.$dirty && !$v.limit.minValue}"
                     >
-                    <label for="limit">Лимит</label>
+                    <label for="limit">{{"Limit"|localize}}</label>
                     <span
                             v-if="$v.limit.$dirty && !$v.limit.minValue"
                             class="helper-text invalid"
                     >
-                        Минимальная значение {{$v.limit.$params.minValue.min}}
+                        {{"min_value"| localize}} {{$v.limit.$params.minValue.min}}
                     </span>
                 </div>
 
 
                 <button class="btn waves-effect waves-light" type="submit">
-                    Обновить
+                    {{"Update"| localize}}
                     <i class="material-icons right">send</i>
                 </button>
             </form>
@@ -63,12 +63,13 @@
 
 <script>
     import {required, minValue} from 'vuelidate/lib/validators'
+    import localizeFilter from '@/filters/localize.filter'
 
     export default {
         name: "CategoryEdit",
-        props:{
-            categories:{
-                type:Array,
+        props: {
+            categories: {
+                type: Array,
                 required: true
             }
         },
@@ -83,35 +84,36 @@
             limit: {minValue: minValue(100)}
         },
         watch: {
-            current(catId){
-             const {title,limit}=  this.categories.find(c => c.id === catId)
+            current(catId) {
+                const {title, limit} = this.categories.find(c => c.id === catId)
                 this.title = title
                 this.limit = limit
-            }
+            },
         },
-        created(){
-            const {id, title,limit} = this.categories[0]
+        created() {
+            const {id, title, limit} = this.categories[0]
             this.current = id
             this.title = title
             this.limit = limit
         },
-        methods:{
-        async submitHandler(){
-                if(this.$v.$invalid){
+        methods: {
+            async submitHandler() {
+                if (this.$v.$invalid) {
                     this.$v.$touch()
                     return
                 }
 
-                try{
-                    const  categoryData={
+                try {
+                    const categoryData = {
                         id: this.current,
                         title: this.title,
                         limit: this.limit
                     }
-                    await this.$store.dispatch('updateCategory',categoryData)
-                    this.$message('Категория успешно обновлена')
-                    this.$emit('updated',categoryData)
-                }catch (e) {}
+                    await this.$store.dispatch('updateCategory', categoryData)
+                    this.$message(localizeFilter('Updated_category'))
+                    this.$emit('updated', categoryData)
+                } catch (e) {
+                }
             }
         },
         mounted() {
@@ -119,7 +121,7 @@
             M.updateTextFields()
         },
         destroyed() {
-            if(this.select && this.select.destroy){
+            if (this.select && this.select.destroy) {
                 this.select.destroy()
             }
         }

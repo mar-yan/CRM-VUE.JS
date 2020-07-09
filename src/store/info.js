@@ -9,7 +9,7 @@ export default {
             try {
                 const uid = await dispatch('getUid')
                 const updateData = {...getters.info, ...toUpdate}
-                await firebase.database().ref(`/users/${uid}/info`).update(toUpdate)
+                await firebase.database().ref(`/users/${uid}/info`).update(updateData)
                 commit('setInfo', updateData)
             } catch (e) {
                commit('setError', e)
@@ -34,7 +34,7 @@ export default {
             state.info = info
         },
         clearInfo(state) {
-            state.info = {}
+            state.info = {locale: state.info.locale}
         }
     },
     getters: {

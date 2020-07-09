@@ -5,8 +5,6 @@ import info from './info'
 import category from './category'
 import record from './record'
 
-
-
 Vue.use(Vuex)
 
 export default new Vuex.Store({
@@ -25,8 +23,7 @@ export default new Vuex.Store({
     async fetchCurrency(){
       const key = process.env.VUE_APP_FIXER
       const result = await fetch(`http://data.fixer.io/api/latest?access_key=${key}&symbols=RUB,EUR,USD`)
-      let a = await result.json()
-      return a
+      return await result.json()
     }
   },
   getters: {

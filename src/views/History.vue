@@ -1,50 +1,123 @@
 <template>
-  <div>
-    <div class="page-title">
-      <h3>История записей</h3>
+    <div>
+        <div class="page-title">
+            <h3>{{"Record_history" | localize}}</h3>
+        </div>
+
+        <div class="history-chart">
+            <canvas ref="canvas"></canvas>
+        </div>
+        <Loader v-if="loading"/>
+
+        <p class="center" v-else-if="!records.length">
+            {{"message_record" | localize }}.
+            <router-link to="/record">{{"Add"| localize}}</router-link>
+        </p>
+
+        <section v-else>
+            <HistoryTable :records="items"/>
+            <Paginate
+                    v-model="page"
+                    :page-count="pageCount"
+                    :click-handler="pageChangeHandler"
+                    :prev-text="'Back' | localize"
+                    :next-text="'Forward' | localize"
+                    :container-class="'pagination'"
+                    :page-class="'waves-effect'"
+            />
+        </section>
     </div>
-
-    <div class="history-chart">
-      <canvas></canvas>
-    </div>
-
-    <section>
-      <table>
-        <thead>
-        <tr>
-          <th>#</th>
-          <th>Сумма</th>
-          <th>Дата</th>
-          <th>Категория</th>
-          <th>Тип</th>
-          <th>Открыть</th>
-        </tr>
-        </thead>
-
-        <tbody>
-        <tr>
-          <td>1</td>
-          <td>1212</td>
-          <td>12.12.32</td>
-          <td>name</td>
-          <td>
-            <span class="white-text badge red">Расход</span>
-          </td>
-          <td>
-            <button class="btn-small btn">
-              <i class="material-icons">open_in_new</i>
-            </button>
-          </td>
-        </tr>
-        </tbody>
-      </table>
-    </section>
-  </div>
 </template>
 
 <script>
+    import HistoryTable from '@/components/HistoryTable'
+    import paginationMixin from '@/mixins/pagination.mixin'
+    import {Pie} from 'vue-chartjs'
+    import localizeFilter from '@/filters/localize.filter'
+
+
     export default {
-        name: "History"
+        name: "History",
+        metaInfo() {
+            return {
+                title: this.$title('Menu_History')
+            }
+        },
+        mixins: [paginationMixin],
+        extends: Pie,
+        data: () => ({
+            loading: true,
+            records: [],
+
+        }),
+        async mounted() {
+            this.records = await this.$store.dispatch('fetchRecords')
+            const categories = await this.$store.dispatch('fetchCategories')
+
+            this.setup(categories)
+
+            this.loading = false
+
+        },
+        methods: {
+            setup: function (categories) {
+                this.setupPagination(this.records.map(record => {
+                    return {
+                        ...record,
+                        categoryName: categories.find(c => c.id === record.categoryId).title,
+
+                        typeClass: record.type === 'income' ? 'green' : 'red',
+                        typeText: record.type === 'income' ? `${localizeFilter('Income')}` : `${localizeFilter('Expenses')}`,
+
+                    }
+                    console.log(categoryName)
+                }))
+
+                this.renderChart({
+                    labels: categories.map(c => c.title),
+                    datasets: [{
+                        label: localizeFilter('CostsForCategories'),
+                        data: categories.map(c => {
+                            return this.records.reduce((total, r) => {
+                                if (r.categoryId === c.id && r.type === 'outcome') {
+                                    total += +r.amount
+                                }
+                                return total
+                            }, 0)
+                        }),
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.2)',
+                            'rgba(54, 162, 235, 0.2)',
+                            'rgba(255, 206, 86, 0.2)',
+                            'rgba(75, 192, 192, 0.2)',
+                            'rgba(153, 102, 255, 0.2)',
+                            'rgba(255, 159, 64, 0.2)'
+                        ],
+                        borderColor: [
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(153, 102, 255, 1)',
+                            'rgba(255, 159, 64, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                })
+            }
+        },
+        watch: {
+            '$route'(to, from) {
+                if (!to.query.page) {
+                    // кликнули в сайдбаре на История
+                    this.pageChangeHandler(1);
+                    this.page = 1;
+                }
+            }
+        },
+        components: {
+            HistoryTable,
+        },
     }
 </script>
 
